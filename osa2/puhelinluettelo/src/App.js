@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+
+import personService from "./services/person";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
@@ -11,9 +12,7 @@ const App = () => {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
-    });
+    personService.getAll().then((people) => setPersons(people));
   }, []);
 
   const filteredPersons = persons.filter((person) =>
@@ -23,17 +22,44 @@ const App = () => {
   const addPerson = (event) => {
     event.preventDefault();
 
-    if (persons.map((person) => person.name).indexOf(newName) >= 0) {
-      alert(`${newName} is already added to phonebook`);
+    const index = persons.map((person) => person.name).indexOf(newName);
+
+    if (index >= 0) {
+      if (
+        window.confirm(
+          `${newName} is already added to phonebook. Replace old number with a new one?`
+        )
+      ) {
+        const id = persons[index].id;
+        personService
+          .update(id, { ...persons[index], number: newNumber })
+          .then((updatedPerson) => {
+            setPersons(
+              persons.map((p) => (p.name !== newName ? p : updatedPerson))
+            );
+          });
+      }
     } else {
       const newPerson = {
         name: newName,
         number: newNumber,
       };
 
-      setPersons(persons.concat(newPerson));
-      setNewName("");
-      setNewNumber("");
+      personService.create(newPerson).then((createdPerson) => {
+        setPersons(persons.concat(createdPerson));
+        setNewName("");
+        setNewNumber("");
+      });
+    }
+  };
+
+  const handeDelete = (id) => {
+    const person = persons.find((p) => p.id === id);
+
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personService.deletePerson(id).then(() => {
+        setPersons(persons.filter((p) => p.id !== id));
+      });
     }
   };
 
@@ -54,7 +80,7 @@ const App = () => {
         newNumber={newNumber}
       />
       <h2>Numbers</h2>
-      <Persons filteredPersons={filteredPersons} />
+      <Persons filteredPersons={filteredPersons} handleDelete={handeDelete} />
     </div>
   );
 };

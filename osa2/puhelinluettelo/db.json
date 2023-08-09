@@ -19,6 +19,16 @@
       "name": "Mary Poppendieck",
       "number": "39-23-6423122",
       "id": 4
+    },
+    {
+      "name": "Kumi",
+      "number": "uusi numero",
+      "id": 6
+    },
+    {
+      "name": "Kumina",
+      "number": "333",
+      "id": 7
     }
   ]
 }
