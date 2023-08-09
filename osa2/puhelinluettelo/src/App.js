@@ -4,12 +4,19 @@ import personService from "./services/person";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
+import { Notification, Error } from "./components/Notification";
+
+import "./style.css";
+
+const NOTIFICATION_TIMEOUT = 12000;
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filter, setFilter] = useState("");
+  const [notificationMessage, setNotification] = useState(null);
+  const [errorMessage, setError] = useState(null);
 
   useEffect(() => {
     personService.getAll().then((people) => setPersons(people));
@@ -37,6 +44,12 @@ const App = () => {
             setPersons(
               persons.map((p) => (p.name !== newName ? p : updatedPerson))
             );
+            setNotification(`Updated ${updatedPerson.name}.`);
+            setTimeout(() => setNotification(null), NOTIFICATION_TIMEOUT);
+          })
+          .catch((error) => {
+            setError(`Error updating ${persons[id].name}.`);
+            setTimeout(() => setError(null), NOTIFICATION_TIMEOUT);
           });
       }
     } else {
@@ -49,17 +62,27 @@ const App = () => {
         setPersons(persons.concat(createdPerson));
         setNewName("");
         setNewNumber("");
+        setNotification(`Added ${createdPerson.name}.`);
+        setTimeout(() => setNotification(null), NOTIFICATION_TIMEOUT);
       });
     }
   };
 
-  const handeDelete = (id) => {
+  const handleDelete = (id) => {
     const person = persons.find((p) => p.id === id);
 
     if (window.confirm(`Delete ${person.name}?`)) {
-      personService.deletePerson(id).then(() => {
-        setPersons(persons.filter((p) => p.id !== id));
-      });
+      personService
+        .deletePerson(id)
+        .then(() => {
+          setPersons(persons.filter((p) => p.id !== id));
+          setNotification(`Deleted ${person.name}.`);
+          setTimeout(() => setNotification(null), NOTIFICATION_TIMEOUT);
+        })
+        .catch((error) => {
+          setError(`${person.name} already deleted.`);
+          setTimeout(() => setError(null), NOTIFICATION_TIMEOUT);
+        });
     }
   };
 
@@ -70,6 +93,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Error message={errorMessage} />
+      <Notification message={notificationMessage} />
       <Filter handleFiltering={handleFiltering} />
       <h2>Add a new</h2>
       <PersonForm
@@ -80,7 +105,7 @@ const App = () => {
         newNumber={newNumber}
       />
       <h2>Numbers</h2>
-      <Persons filteredPersons={filteredPersons} handleDelete={handeDelete} />
+      <Persons filteredPersons={filteredPersons} handleDelete={handleDelete} />
     </div>
   );
 };
