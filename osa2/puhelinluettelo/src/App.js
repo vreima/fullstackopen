@@ -48,7 +48,9 @@ const App = () => {
             setTimeout(() => setNotification(null), NOTIFICATION_TIMEOUT);
           })
           .catch((error) => {
-            setError(`Error updating ${persons[id].name}.`);
+            setError(
+              `Error updating ${persons[index].name}: ${error.response.data.error}`
+            );
             setTimeout(() => setError(null), NOTIFICATION_TIMEOUT);
           });
       }
@@ -58,13 +60,27 @@ const App = () => {
         number: newNumber,
       };
 
-      personService.create(newPerson).then((createdPerson) => {
-        setPersons(persons.concat(createdPerson));
-        setNewName("");
-        setNewNumber("");
-        setNotification(`Added ${createdPerson.name}.`);
-        setTimeout(() => setNotification(null), NOTIFICATION_TIMEOUT);
-      });
+      personService
+        .create(newPerson)
+        .then((resultPerson) => {
+          console.log(`Creating ${newPerson.name} succeeded`);
+          if (resultPerson) {
+            setPersons(persons.concat(resultPerson));
+            setNewName("");
+            setNewNumber("");
+            setNotification(`Added ${resultPerson.name}.`);
+            setTimeout(() => setNotification(null), NOTIFICATION_TIMEOUT);
+          }
+        })
+        .catch((error) => {
+          console.log(
+            `Creating ${newPerson.name} failed: ${error.response.data.error}`
+          );
+          setError(
+            `Error adding ${newPerson.name}: ${error.response.data.error}`
+          );
+          setTimeout(() => setError(null), NOTIFICATION_TIMEOUT);
+        });
     }
   };
 
